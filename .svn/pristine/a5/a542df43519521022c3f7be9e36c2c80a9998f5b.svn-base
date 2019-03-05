@@ -1,0 +1,81 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import Home from '@/components/Home'
+import Login from '@/pages/Login/Login'
+import MenuManagement from '@/pages/PowerManagement/MenuManagement'//权限管理-->菜单管理
+import CharacterManagement from '@/pages/PowerManagement/CharacterManagement'//权限管理-->角色管理
+import UserControl from '@/pages/PowerManagement/UserControl'//权限管理-->用户管理
+import ClassManagement from '@/pages/PowerManagement/ClassManagement'//权限管理-->班级管理
+import testexamintion from '@/pages/freedomTest/testexamintion'//自由实验-->实验列表
+import experimentHistory from '@/pages/freedomTest/experimentHistory'//自由实验-->实验历史
+import myExperiment from '@/pages/unifyTest/myExperiment'// 统一实验-->我的实验
+import unifyHistory from '@/pages/unifyTest/unifyHistory'//统一实验-->实验历史
+import  experimentReport from '@/pages/Labreport/experimentReport' //实验报告管理-->实验报告列表
+import  experimentReportHis from '@/pages/Labreport/experimentReportHis' //实验报告管理-->实验报告列表
+import planList from '@/pages/teachManagement/planList'  //教学计划管理-->教学计划列表
+import ClassBelongs from '@/pages/ClassManagement/ClassBelongs' // 所属班级管理-->班级列表
+import examination from '@/pages/knowledgeManagement/examination'//在线考试管理-->考题管理
+import examinationPaper from '@/pages/knowledgeManagement/examinationPaper'//在线考试管理--试卷管理
+import examtionpaperadd from '@/pages/knowledgeManagement/examtionpaperadd'//在线考试管理--试卷增加
+import examinationRoom from '@/pages/knowledgeManagement/examinationRoom'//在线考试管理--考场管理
+import scoreList from '@/pages/knowledgeManagement/scoreList'//在线考试管理--成绩管理
+import TestRoomdeail from '@/pages/knowledgeManagement/TestRoomdeail'//在线考试管理--考场增加
+import examinationcreat from '@/pages/knowledgeManagement/examinationcreat'//在线考试管理--考题管理--增加详情
+import EnviromentConfig from '@/pages/experimentalManagement/EnviromentConfig'//实验配置管理--实验环境配置
+import ConfigurationList from '@/pages/experimentalManagement/ConfigurationList'//实验配置管理--实验配置列表
+import MirroringConfigurations from '@/pages/systemConfiguration/MirroringConfigurations'//系统配置管理--镜像配置列表
+import platformInterface from '@/pages/systemConfiguration/platformInterface'//系统配置管理--平台接口管理
+import platformType from '@/pages/systemConfiguration/platformType'//系统配置管理--平台接口管理
+import OpenstackMonitor from '@/pages/MonitoringManagement/OpenstackMonitor'//监控管理--openstack云平台监控
+import kubernetesMonitor from '@/pages/MonitoringManagement/kubernetesMonitor'//监控管理--okubernetes云平台监控
+import systemManagement from '@/pages/Managementplatform/systemManagement'//实验管理平台--体系管理
+import  TestList  from  '@/pages/Managementplatform/TestList'//实验管理平台--实验平台
+import AddTest from  '@/pages/Managementplatform/AddTest' ////实验管理平台--?新增实验
+Vue.use(Router)
+export default new Router({
+  routes: [
+    {
+      path: '/',
+      name: 'Home',
+      component: Home,
+      children: [
+        {path: 'MenuManagement', name: 'MenuManagement', component: MenuManagement},   
+        {path: 'CharacterManagement', name: 'CharacterManagement', component: CharacterManagement},  
+        {path: 'UserControl', name: 'UserControl', component: UserControl}, 
+        {path:'ClassManagement',name:'ClassManagement',component:ClassManagement},
+        {path:'testexamintion',name:'testexamintion',component:testexamintion},
+        {path:'experimentHistory',name:'experimentHistory',component:experimentHistory},
+        {path:'myExperiment',name:'myExperiment',component:myExperiment},
+        {path:'unifyHistory',name:'unifyHistory',component:unifyHistory},
+        {path:'experimentReport',name:'experimentReport',component:experimentReport},
+        {path:'experimentReportHis',name:'experimentReportHis',component:experimentReportHis},
+        {path:'planList',name:'planList',component:planList},
+        {path:'ClassBelongs',name:'ClassBelongs',component:ClassBelongs},
+        {path:'examination',name:'examination',component:examination},
+        {path:'examinationPaper',name:'examinationPaper',component:examinationPaper},
+        {path:'examinationRoom',name:'examinationRoom',component:examinationRoom},
+        {path:'scoreList',name:'scoreList',component:scoreList},
+        {path:'EnviromentConfig',name:'EnviromentConfig',component:EnviromentConfig},
+        {path:'ConfigurationList',name:'ConfigurationList',component:ConfigurationList},
+        {path:'MirroringConfigurations',name:'MirroringConfigurations',component:MirroringConfigurations},
+        {path:'platformInterface',name:'platformInterface',component:platformInterface},
+        {path:'platformType',name:'platformType',component:platformType},
+        {path:'OpenstackMonitor',name:'OpenstackMonitor',component:OpenstackMonitor},
+        {path:'kubernetesMonitor',name:'kubernetesMonitor',component:kubernetesMonitor},
+        {path:'systemManagement',name:'systemManagement',component:systemManagement},
+        {path:'TestList',name:'TestList',component:TestList},
+        {path:'/AddTest/:id',name:'AddTest',component:AddTest},
+        {path:'TestRoomdeail',name:"TestRoomdeail",component:TestRoomdeail},
+        {path:'/examinationcreat/:type',name:"examinationcreat",component:examinationcreat},
+        {path:"examtionpaperadd",name:examtionpaperadd,component:examtionpaperadd}
+
+
+      ]
+    },
+    {
+      path: '/Login',
+      name: 'Login',
+      component: Login
+    }
+  ]
+})

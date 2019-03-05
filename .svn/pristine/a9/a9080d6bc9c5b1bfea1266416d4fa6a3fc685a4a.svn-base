@@ -1,0 +1,119 @@
+<template>
+  <el-row>
+    <el-col>
+      <div class="navigationbar">
+        <span class="navigationname">
+          在线考试管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          试卷管理
+        </span>
+      </div>
+    </el-col>
+    <el-col :span='24' >
+         <el-steps :active="active" finish-status="success"  :space="200"   simple>
+                <el-step title="基本信息"></el-step>
+                <el-step title="试题管理"></el-step>
+        </el-steps>
+    </el-col> 
+    <el-col :span='24' v-show="active==1">
+           <el-form  :model="testpaper"   label-width="140px;"  class="testpaper">
+                     <el-form-item  label='试卷名称:' >
+                            <el-input v-model='testpaper.value' placeholder="试卷名称"></el-input>  
+                     </el-form-item>
+                     <el-form-item label="考试难度:">
+                        <el-radio-group v-model="testpaper.radio2">
+                                <el-radio :label="1">初级</el-radio>
+                                <el-radio :label="2">中级</el-radio>
+                                <el-radio :label="3">高级</el-radio>
+                            </el-radio-group>
+                     </el-form-item>
+                     <el-form-item  label="考试时间:">
+                          <el-input v-model='testpaper.value' 
+                             placeholder="列如 :30" >
+                          </el-input>
+                     </el-form-item>
+                     <el-form-item label='试卷描述:'>
+                             <el-input
+                                type="textarea"
+                                :autosize="{ minRows: 2, maxRows: 4}"
+                                placeholder="请输入内容"
+                                v-model="testpaper.textarea3">
+                             </el-input>
+                     </el-form-item>
+                     <el-form-item>
+                           <el-button type="primary" size='mini' style="margin-left:80px;" @click="testNext">下一步</el-button>
+                     </el-form-item>
+          </el-form>    
+    </el-col>   
+    <el-col :span='24'  v-show="active==2" >
+              <el-form :inline="true" style="margin-top:20px"  size="small" >
+                      <el-form-item>
+                             <el-select v-model="value" placeholder="请选择">
+                                <el-option
+                                v-for="item in options"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                                </el-option>
+                            </el-select>     
+                      </el-form-item>
+                      <el-form-item  label='试卷名称'>
+                           <el-input v-model='value'></el-input>
+                      </el-form-item>
+                      <el-form-item>
+                           <el-button  type="primary" icon="el-icon-search" >查找试题</el-button>
+                      </el-form-item>
+              </el-form>
+
+    </el-col>
+
+
+
+
+
+  </el-row>
+</template>
+
+<script>
+export default {
+       data(){
+            return{
+                options:[],
+                value:'',
+                 active:1,  
+                 testpaper:{
+                         value:'', 
+                         radio2:'',
+                         textarea3:'',
+                 }
+
+            }
+       },
+       methods:{
+            testNext(){//下一步
+                 this.active=this.active+1
+                  
+            }
+       },
+       mounted(){
+
+       }
+
+
+};
+</script>
+
+<style  lang='scss'   scoped>
+    .testpaper{
+           margin-top: 40px; 
+    }
+</style>
+<style>
+   .testpaper .el-input{
+        width: 300px;
+   }
+  .testpaper .el-textarea{
+       width: 300px;
+  }
+
+</style>

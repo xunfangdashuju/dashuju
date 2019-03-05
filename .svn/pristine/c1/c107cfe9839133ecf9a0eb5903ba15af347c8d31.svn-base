@@ -1,0 +1,79 @@
+<template>
+  <el-row>
+    <el-col>
+      <div class="navigationbar">
+        <span class="navigationname">
+          在线考试管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          试卷管理
+        </span>
+      </div>
+    </el-col>
+    <el-col :span='24' >
+          <el-form  size="mini"
+            :inline="true"
+            >
+               <el-form-item>
+                       <el-input placeholder="请输入内容"  v-model="input4">
+                       <el-button slot="append" icon="el-icon-search"></el-button>
+                    </el-input> 
+               </el-form-item> 
+                <el-form-item>
+                      <el-button icon='el-icon-plus' type="primary" @click='testpaperadd' >试卷新增</el-button>
+                </el-form-item>
+          </el-form>
+    </el-col> 
+    <el-col :span='24'>
+               <el-table
+                    size="mini"
+                    border
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column
+                    prop="date"
+                    label="日期"
+                    width="180">
+                    </el-table-column>
+                    <el-table-column
+                    prop="name"
+                    label="姓名"
+                    width="180">
+                    </el-table-column>
+                    <el-table-column
+                    prop="address"
+                    label="地址">
+                    </el-table-column>
+               </el-table>  
+    </el-col>
+  </el-row>
+</template>
+
+<script>
+export default {
+       data(){
+            return{
+                 input4:'',
+                 tableData:[],
+
+            }
+       },
+       methods:{
+             testpaperadd(){//点击新增页面,
+                      this.$router.push('/examtionpaperadd')
+             }
+       },
+       mounted(){
+
+       }
+
+
+};
+</script>
+
+<style  lang='scss'   scoped>
+
+</style>
+<style>
+
+
+</style>

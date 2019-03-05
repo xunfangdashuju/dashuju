@@ -1,0 +1,148 @@
+<template>
+  <el-row class="addtest">
+    <el-col :span="24">
+      <div class="navigationbar">
+        <span class="navigationname">
+          实验平台管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          新增实验
+        </span>
+      </div>
+    </el-col>
+    <el-col :span="24">
+      <el-tabs v-model="activeName" type="border-card" @tab-click="selecttab" size="small">
+        <el-tab-pane label="基本信息" name="first"></el-tab-pane>
+        <el-tab-pane label="内容编辑" name="second"  disabled='true'></el-tab-pane>
+        <el-tab-pane label="虚拟机配置" name="third"></el-tab-pane>
+      </el-tabs>
+    </el-col>
+    <el-col :span="24">
+      <el-form  :model="testformdeil" class="testformdeil" label-width="120px;">
+          <el-form-item label="实验名称:">
+            <el-input v-model="testformdeil.user" placeholder="实验名称"></el-input>
+          </el-form-item>
+          <el-form-item label="实验简介:">
+            <el-input v-model="testformdeil.user" placeholder="实验简介" type="textarea" :rows="2"></el-input>
+          </el-form-item>
+          <el-form-item label="实验时长:">
+            <el-input v-model="testformdeil.user" placeholder="实验时长 单位分钟" type="number"></el-input>
+          </el-form-item>
+
+          <el-form-item label="选择所属系:" prop="selectedOptions" id="autore">
+            <div class="blockcaser">
+              <el-cascader
+                :options="optionselect"
+                v-model="testformdeil.selectedOptions"
+                @change="changeval"
+              ></el-cascader>
+            </div>
+          </el-form-item>
+           <el-form-item>
+               <el-button type="primary" size="small" @click='basicnext'>下一步</el-button>
+           </el-form-item>
+      
+      </el-form>
+    </el-col>
+  </el-row>
+</template>
+
+<script>
+import {
+  courseStructurepage,
+  courseClassificationpage,
+  courseContentpage
+} from "@/api/api";
+export default {
+  data() {
+    return {
+      activeName: "first",
+      optionselect: [],
+      testformdeil: {
+        selectedOptions: []
+      }
+    };
+  },
+  methods: {
+    selecttab(index) {
+      console.log(index.label);
+    },
+    changeval(val) {
+      //this.formvideo.courseContentId = this.formvideo.selectedOptions[2];
+    },
+    focusdata() {
+      var params = {
+        currentPage: 1,
+        pageSize: 100
+      };
+      courseStructurepage(params).then(res => {
+        if (res.data.code == 0) {
+          let lists = res.data.data.list;
+          lists.forEach((item, index) => {
+            this.optionselect.push({
+              label: item.courseStructureName,
+              value: item.courseStructureId,
+              children: []
+            });
+            this.Stairarryindex = this.optionselect;
+          });
+          this.Stairarryindex.forEach((item, indexcas) => {
+            var parms = {
+              currentPage: 1,
+              pageSize: 1000,
+              courseStructureId: this.optionselect[indexcas].value
+            };
+            courseClassificationpage(parms).then(res => {
+              let cascChid = [];
+              cascChid = res.data.data.list;
+              var _this = this;
+              if (res.data.code == 0) {
+                cascChid.forEach((item, index) => {
+                  this.optionselect[indexcas].children.push({
+                    label: item.courseClassificationName,
+                    value: item.courseClassificationId,
+                    children: []
+                  });
+                  var parms = {
+                    currentPage: 1,
+                    pageSize: 1000,
+                    courseClassificationId: this.optionselect[indexcas]
+                      .children[index].value
+                  };
+                  let conentchid = [];
+                  courseContentpage(parms).then(res => {
+                    conentchid = res.data.data.list;
+                    conentchid.forEach((item, contentindex) => {
+                      this.optionselect[indexcas].children[index].children.push(
+                        {
+                          label: item.courseContentName,
+                          value: item.courseContentId
+                        }
+                      );
+                    });
+                  });
+                });
+              }
+            });
+          });
+        }
+      });
+    }
+  },
+  mounted(){
+       this.focusdata()
+  }
+};
+</script>
+
+<style  lang='scss' scoped>
+.addtest {
+}
+</style>
+<style>
+.testformdeil .el-form-item__content {
+  width: 600px;
+}
+.blockcaser .el-cascader {
+  width: 100%;
+}
+</style>

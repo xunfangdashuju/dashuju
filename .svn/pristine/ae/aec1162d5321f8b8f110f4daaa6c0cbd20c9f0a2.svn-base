@@ -1,0 +1,118 @@
+import {baseUrl} from '../../static/baseurl'
+import axios from 'axios'
+import qs from 'qs'
+axios.defaults.baseURL='http://192.168.80.63:20005/api'
+axios.interceptors.request.use(
+     config => {
+          const token = sessionStorage.getItem('token')   
+        //  let data = config.data
+         console.log(token)
+          if(config.method=='post'){
+               let data = qs.parse(config.data)
+               config.data = qs.stringify({
+                   token: token,
+                   ...data
+                  })
+              
+          }else if(config.method=='get'||config.method=='delete'){
+               config.params = {
+                      token: token,
+                    ...config.params
+               }
+          } 
+          return config
+     },function(error){
+          return Promise.reject(error)
+     }
+)
+
+//登录接口
+export const userlogin = (parms)=>{
+     return axios
+     .post("/user/login",parms)
+}
+//修改密码
+export const updatepassword = (parms)=>{
+     return axios
+     .post("/user/update/password",parms)
+}
+//创建角色
+export const roleadd = (parms) => {
+     return axios
+         .post('/role/add', parms)
+ }
+ //角色查询
+ export const rolelist = (parms) => {
+     return axios
+         .get('/role/list', { params: parms })
+ }
+ //角色删除
+ export const roledelete = (parms) => {
+     return axios
+         .get('/role/delete', { params: parms })
+ }
+ //班级添加
+ export const classadd =(parms) =>{
+      return axios
+      .post('/class/add',parms)
+ }
+ //班级列表
+ export const classlist = (parms) => {
+     return axios
+         .get('/class/list', { params: parms })
+ }
+ //班级删除
+ export const classlistdelete = (parms) => {
+     return axios
+         .delete('/class/delete/classId', { params: parms })
+ }
+ //编辑编辑
+ export const classupdata =(parms) =>{
+     return axios
+     .post('/class/update',parms)
+}
+//创建用户,验证用户登录名
+export const usercheck = (parms) => {
+     return axios
+         .get('/user/check', { params: parms })
+ }
+ //创建新用户
+ export const userAdd =(parms) =>{
+     return axios
+     .post('/user/add',parms)
+}
+//用户列表
+export const userlistpage = (parms) => {
+     return axios
+         .get('/user/list/page', { params: parms })
+ }
+ //用户删除
+ export const deleteuid = (parms) => {
+     return axios
+         .get('/user/delete/account', { params: parms })
+ }
+ //用户批量删除
+ export const deletbatch = (parms) => {
+     return axios
+         .get('/user/delete/batch', { params: parms })
+ }
+//权限-->角色分配菜单
+export const permissionlistsort = (parms) => {
+     return axios
+         .get('/permission/list/sort', { params: parms })
+ }
+ //权限管理菜单管理增加
+export const permissionlistfirst = (parms) => {
+     return axios
+         .get('/permission/list/first', { params: parms })
+ }
+ //权限操作相关删除接口
+export const permissiondelete = (parms) => {
+     return axios
+         .get('/permission/delete', { params: parms })
+ }
+ //权限菜单的修改
+export const permissionupdate = (parms) => {
+     return axios
+         .post('/permission/update', parms)
+ }

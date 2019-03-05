@@ -1,0 +1,107 @@
+
+.el-submenu .el-menu-item {
+  height: 36px;
+  line-height: 36px;
+}
+
+$fonts: "Microsoft YaHei";//变量
+%pagge-styletop{//继承
+     margin-top: 15px;
+}
+.navigationbar{//头部
+    height: 40px; 
+    background: #0a435e;
+    width: 100%;
+    color: #fff;
+    line-height: 40px;
+    margin-bottom: 10px;
+    .navigationname{
+        margin-left: 20px;
+   }
+}
+/* 分页 */
+.paagenumber{   
+    text-align: center;
+    bottom: 10px;
+    width: 100%; 
+    @extend %pagge-styletop; 
+}
+//菜单栏的高度,
+
+//上传的正方形
+.avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+    border:1px solid #8c939d;
+    border-radius: 5px;
+  }
+  .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
+  }
+  .iconleft{
+    margin-right: 8px;
+  }
+
+.courseStructureName{
+  font-size: 12px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  margin-top: 5px;
+  border-bottom: solid  #d8d8d8;
+  border-width: thin;
+}
+// .courseStructureName:hover{
+     
+// }
+.couseStryname{
+  display: inline-block;
+  color: #717b82;
+}
+
+.coursename{
+  color:#3dacf3;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  width: 237px;
+  margin-top: 5px;
+}
+.stytemcover{
+  display: inline-block;
+   width: 100%;
+   height:116px;
+   border-radius: 5px;
+}
+.stytemstyle{
+  width:235px;
+  height: 182px;
+  border:1px solid #ebebeb;
+  margin:20px 0px 0px 20px;  
+  border-radius: 5px;
+  cursor: pointer;
+  float: left;
+}
+.coursename{
+  color:#3dacf3;
+  font-family: $fonts;
+  height: 20px;
+  line-height: 20px;
+  width: 237px;
+  margin-top: 5px;
+}

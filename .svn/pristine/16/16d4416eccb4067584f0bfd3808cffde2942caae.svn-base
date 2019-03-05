@@ -1,0 +1,208 @@
+<template>
+  <el-row>
+    <el-col :span="24">
+      <div class="navigationbar">
+        <span class="navigationname">
+          在线考试管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          考场增加
+        </span>
+      </div>
+    </el-col>
+    <el-col :span="24">
+      <el-steps :active="active" finish-status="success" :space="400">
+        <el-step title="考场信息"></el-step>
+        <el-step title="考生信息"></el-step>
+      </el-steps>
+    </el-col>
+   <el-col v-if="active==1">
+        <hr/>
+    <el-col :span="12" >
+      <el-form :model="testAddform" label-width="120px" size="small" class="testAddform">
+        <el-form-item label="考场名称:">
+          <el-input v-model="testAddform.user" placeholder="请输入考场名称"></el-input>
+        </el-form-item>
+        <el-form-item label="试卷:">
+          <el-select v-model="testAddform.region" placeholder="选择试卷">
+            <el-option label="试卷" value="shanghai"></el-option>
+            <el-option label="区域二" value="beijing"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="考试开始时间:">
+          <el-date-picker
+            v-model="region"
+            type="datetime"
+            placeholder="选择日期时间"
+            default-time="09:00:00"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="考场排序:">
+          <el-input v-model="testAddform.user" placeholder="请输入考场名称" type="number"></el-input>
+        </el-form-item>
+        <el-form-item label="考场简介:">
+          <el-input v-model="testAddform.user" placeholder="请输入考场名称" type="textarea" :rows="2"></el-input>
+        </el-form-item>
+      </el-form>
+    </el-col>
+    <el-col :span="12">
+      <el-form style="margin: 20px 0px 0px 80px;" size="mini">
+        <el-form-item label="考场图片:">
+          <el-button type="success" icon="el-icon-upload2">上传图片</el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-upload
+            class="avatar-uploader"
+            action="https://jsonplaceholder.typicode.com/posts/"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+          >
+            <img v-if="imageUrl" :src="imageUrl" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
+        <el-form-item style="margin:80px 80px 0px 20px;float:right;width:140px">
+          <el-popover placement="bottom" width="160" v-model="visible2">
+            <p>取消就后未保存的内容都将删除？</p>
+            <div style="text-align: right; margin: 0">
+              <el-button size="mini" type="text" @click="visible2 = false">取消</el-button>
+              <el-button type="primary" size="mini" @click="visible2 = false">确定</el-button>
+            </div>
+            <el-button slot="reference">取消</el-button>
+          </el-popover>
+          <el-button type="primary" @click="nextStep">下一步</el-button>
+        </el-form-item>
+      </el-form>
+    </el-col>
+   </el-col>
+    <el-col  :span='24'  v-else >
+         <hr/>
+         <el-col :span='24' style="margin-top:20px"> 
+               <el-button type="primary" size='mini' @click="addStudents" icon='el-icon-plus' >增加考生</el-button>
+               <el-col :span="24">
+                    <el-table
+                        :data="examineetableData"
+                        border
+                        size="mini"
+                        style="width: 100%;margin-top:20px">
+                        <el-table-column
+                            prop="date"
+                            label="姓名"
+                            width="180">
+                        </el-table-column>
+                        <el-table-column
+                            prop="name"
+                            label="班级"
+                            width="180">
+                        </el-table-column>
+                        <el-table-column
+                            prop="address"
+                            label="操作">
+                        </el-table-column>
+                    </el-table>  
+               </el-col>
+                <el-dialog
+                    title="考生信息"
+                    :visible.sync="dialogVisible"
+                    width="580px">  
+                   <el-form  size='mini'>
+                       <el-form-item>
+                         <el-select v-model="value8" filterable placeholder="请选择班级">
+                            <el-option
+                                v-for="item in Classoptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                                </el-option>
+                         </el-select> 
+                       </el-form-item>
+                   </el-form>
+                     
+                      <el-transfer
+                        filterable
+                        :filter-method="filterMethod"
+                        filter-placeholder="请输入学生"
+                        v-model="value2"
+                        :titles="['用户列表', '已选择用户']"
+                        :data="data2">
+                     </el-transfer>
+                      <span slot="footer" class="dialog-footer"  >
+                            <el-button @click="dialogVisible = false"  size='mini'    >取 消</el-button>
+                            <el-button type="primary" @click="dialogVisible = false" size='mini'  >确 定</el-button>
+                        </span>
+                </el-dialog>
+
+
+         </el-col>
+               
+    </el-col>
+  </el-row>
+</template>
+
+<script>
+
+
+export default {
+  data() {
+    return {
+      data2:[],
+      value2: [],
+      dialogVisible:false,
+      active: 1,
+      testAddform: {
+        user: "",
+        region: ""
+      },
+      region: "",
+      imageUrl: "",
+      visible2: false,
+      examineetableData:[],
+      Classoptions:[],
+    };
+  },
+  methods: {
+    handleAvatarSuccess(res, file) {
+      //上传成功
+      this.imageUrl = URL.createObjectURL(file.raw);
+    },
+    beforeAvatarUpload(file) {
+      //上传前
+      const isJPG = file.type === "image/jpeg";
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isJPG) {
+        this.$message.error("上传头像图片只能是 JPG 格式!");
+      }
+      if (!isLt2M) {
+        this.$message.error("上传头像图片大小不能超过 2MB!");
+      }
+      return isJPG && isLt2M;
+    },
+    nextStep() { //下一步
+         this.active=2             
+     },
+     addStudents(){//
+           this.dialogVisible=true     
+
+     },
+     filterMethod(){//过滤
+
+     }
+
+  }
+};
+</script>
+
+<style  lang='scss'   scoped>
+.testAddform {
+  margin-top: 20px;
+}
+</style>
+<style>
+.testAddform .el-select {
+  width: 100%;
+}
+.testAddform .el-date-editor {
+  width: 100%;
+}
+</style>

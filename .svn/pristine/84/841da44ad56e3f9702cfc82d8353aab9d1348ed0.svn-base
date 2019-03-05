@@ -1,0 +1,33 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import Home from '@/components/Home'
+import Login from '@/pages/Login/Login'
+import MenuManagement from '@/pages/PowerManagement/MenuManagement'//权限管理-->菜单管理
+import CharacterManagement from '@/pages/PowerManagement/CharacterManagement'//权限管理-->角色管理
+import UserControl from '@/pages/PowerManagement/UserControl'//权限管理-->用户管理
+import ClassManagement from '@/pages/PowerManagement/ClassManagement'//权限管理-->班级管理
+Vue.use(Router)
+
+
+
+export default new Router({
+  routes: [
+    {
+      path: '/',
+      name: 'Home',
+      component: Home,
+      children: [
+        {path: 'MenuManagement', name: 'MenuManagement', component: MenuManagement},   
+        {path: 'CharacterManagement', name: 'CharacterManagement', component: CharacterManagement},  
+        {path: 'UserControl', name: 'UserControl', component: UserControl}, 
+        {path:'ClassManagement',name:'ClassManagement',component:ClassManagement},
+
+      ]
+    },
+    {
+      path: '/Login',
+      name: 'Login',
+      component: Login
+    }
+  ]
+})

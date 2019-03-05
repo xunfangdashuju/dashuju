@@ -1,0 +1,1055 @@
+<template>
+  <el-row class="addtest">
+    <el-col :span="24">
+      <div class="navigationbar">
+        <span class="navigationname">
+          实验平台管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          新增实验
+        </span>
+      </div>
+    </el-col>
+    <el-col :span="24">
+      <el-steps :active="activeSteps" simple>
+        <el-step title="基本信息" icon="el-icon-edit-outline"></el-step>
+        <el-step title="内容编辑" icon="el-icon-edit"></el-step>
+        <el-step title="虚拟机配置" icon="el-icon-picture"></el-step>
+        <el-step title="实验资料"  icon="el-icon-upload" ></el-step>
+      </el-steps>
+    </el-col>
+    <el-col :span="24" v-if="activeSteps==1">
+      <el-form
+        :model="testformdeil"
+        class="testformdeil"
+        label-width="120px;"
+        size="small"
+        :rules="testformdeilrules"
+        ref="testformdeil"
+      >
+        <el-form-item label="实验名称:" prop="resourceManagementName">
+          <el-input v-model="testformdeil.resourceManagementName" placeholder="实验名称" @blur="leveblur"></el-input>
+          <span  style="color:red"  v-show='repetitionName'>实验名称重复</span>
+        </el-form-item>
+        <el-form-item label="实验简介:">
+          <el-input
+            v-model="testformdeil.resourceManagementDesc"
+            placeholder="实验简介"
+            type="textarea"
+            :rows="2"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="实验时长:" prop="experimentalTime">
+          <el-input
+            v-model.number="testformdeil.experimentalTime"
+            placeholder="实验时长单位分钟"
+            type="number"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="实验排序:" prop="resourceOrder">
+          <el-input v-model.number="testformdeil.resourceOrder" placeholder="实验排序" type="number"></el-input>
+        </el-form-item>
+        <el-form-item label="选择所属系:" prop="selectedOptions">
+          <div class="blockcaser">
+            <el-cascader
+              :options="optionselect"
+              v-model="testformdeil.selectedOptions"
+              @change="changeval"
+            ></el-cascader>
+          </div>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="small" @click="basicnext">下一步</el-button>
+        </el-form-item>
+      </el-form>
+    </el-col>
+    <el-col :span="24" v-if="activeSteps==2" class="conctentedit">
+      <el-col :span="8" class="conctentborder concentborderleft">
+        <el-tree
+          :data="treedata"
+          node-key="id"
+          :current-node-key="4"
+          highlight-current
+          default-expand-all
+          :expand-on-click-node="false"
+          @current-change="currentchange"
+        >
+          <span class="custom-tree-node" slot-scope="{ node, data }">
+            <span>{{ node.label }}</span>
+            <span>
+              <span v-if="node.data.label=='实验步骤'">
+                <i class="el-icon-plus" @click="() => append(node,data)" style="width:23px;"></i>
+              </span>
+              <span v-if="node.data.id>999">
+                <i
+                  class="el-icon-edit-outline"
+                  style="width:23px;"
+                  @click="() => edittree(node, data)"
+                ></i>
+              </span>
+              <span v-if="node.data.label !=='内容树'">
+                <i class="el-icon-delete" @click="() => remove(node, data)"></i>
+              </span>
+            </span>
+          </span>
+        </el-tree>
+        <el-dialog title="添加新的实验步骤" width="120" @close="closediglog" :visible.sync="dialogTest">
+          <el-form :model="treeStep" ref="treeStep">
+            <el-form-item
+              prop="steepName"
+              :rules="[ { required: true, message: '请输入添加步骤的名字', trigger: 'blur' },]"
+            >
+              <el-input v-model="treeStep.steepName" placeholder="请输入步骤名字"></el-input>
+            </el-form-item>
+          </el-form>
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogTest = false" size="mini">取 消</el-button>
+            <el-button type="primary" @click="submitStepName" size="mini">确 定</el-button>
+          </span>
+        </el-dialog>
+      </el-col>
+      <el-col :span="16" class="conctentborder conctenteditor">
+        <div class="testName">{{showstepName}}</div>
+        <span v-if='active==="synthetic_test" ' >
+       <el-form
+        label-width="100px"
+        class="elseform"
+        :model="formStructuredata"
+        size="mini"
+        ref="formStructuredata"
+        :inline="true"
+      >
+        <el-form-item
+          label="试题体系:"
+          prop="courseStructureId"
+          :rules="{ required: true, message: '必须选择体系', trigger: 'change'}"
+        >
+          <el-select
+            v-model="formStructuredata.courseStructureId"
+            placeholder="请选择"
+            @change="changeseleval"
+          >
+            <el-option
+              v-for="item in optionstixi"
+              :key="item.createTime"
+              :label="item.courseStructureName"
+              :value="item.courseStructureId"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item style="display:inline-block" label="试题分类:">
+          <el-select
+            v-model="formStructuredata.courseClassificationId"
+            placeholder="请选择分类/非必选"
+            @change="changeconcent"
+          >
+            <el-option
+              v-for="item in datamodel"
+              :key="item.createTime"
+              :label="item.courseClassificationName"
+              :value="item.courseClassificationId"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item >
+            <el-button type="primary" size="mini" @click="Seachques" >查询</el-button>
+        </el-form-item>
+      </el-form>  
+       <el-table
+       :data="QuestiontableData"
+         border
+         height='250'
+        size="mini"
+         @selection-change="handleSelectionChange"
+        >
+             <el-table-column 
+                   type="selection"
+                   width='55' >
+               </el-table-column>  
+            <el-table-column
+              prop="questionName"
+              label="试题"
+             >
+            </el-table-column>
+            <el-table-column
+              prop="courseStructureName"
+              label="体系"
+              width="140">
+            </el-table-column>
+       </el-table>
+        </span>
+         <span v-else >
+          <!-- <mavon-editor
+            v-if="childrens.length > 0&&teststep===false"
+            v-model="childrens[index].value"
+            :ishljs="true"
+            :subfield="false"
+             class="mavom_editor"
+             :placeholder="showstepName"
+              @imgAdd="$imgAdd"
+          />  
+         <mavon-editor
+            ref=md
+            v-if='teststep===true'
+            v-model="markdownedit.analysis[active]"
+            :ishljs="true"
+            :subfield="false"
+            class="mavom_editor"
+            :placeholder="showstepName"
+             @imgAdd="$imgAdd" 
+          /> -->
+
+           <!-- <div ref="editor" style="text-align:left"></div> -->
+            <!-- <button v-on:click="getContent">查看内容</button> -->
+            <Edit  @change="editChange"   :contextmenu="teststep===true ? markdownedit.analysis[active] :  childrens[index].value" />
+       </span>
+      </el-col>
+      <el-col :span="24">
+        <div style="float:right;margin-top:40px">
+          <el-button type="primary" size="mini" @click="backStep">上一步</el-button>
+          <el-button type="primary" size="mini" @click="basicnext">下一步</el-button>
+        </div>
+      </el-col>
+    </el-col>
+    <el-col :span="24" v-if="activeSteps==3">
+      <hr>
+      <div class="virtualMachine">虚拟机列表</div>
+      <hr>
+      <el-form size="mini" :model="vitualform" label-width="100px" style="width:400px;">
+        <el-form-item label="系统云信息:">
+             <!-- <el-input v-model="vitualform.imageId" ></el-input> -->
+             <el-select v-model="vitualform.imageId" placeholder="请选择" style="width:300px;"  @change='changecloud'>
+                  <el-option 
+                      v-for='item in Cloudinformationdata'
+                      :label="item.name" 
+                      :key='item.type'
+                      :value="item.type">
+                  </el-option>
+            </el-select>
+
+        </el-form-item>
+        <el-form-item label="镜像:">
+           <el-select v-model="vitualform.allocationAdd" placeholder="请选择" style="width:300px;">
+              <el-option 
+                  v-for="item in kubernetesTdata" 
+                  :key='item.id'
+                  :label="item.templateName"
+                  :value="item.id"
+               >
+               </el-option>
+            </el-select>
+        </el-form-item>
+
+      </el-form>
+      <el-col :span="24">
+        <div style="float:right;margin-top:40px">
+          <el-button type="primary" size="mini" @click="backStep">上一步</el-button>
+          <el-button type="primary" size="mini" @click="saveover" >下一步</el-button>
+        </div>
+      </el-col>
+    </el-col>
+    <el-col :span="24" v-if="activeSteps==4">
+          <el-form style="margin-top:60px;">
+            <el-form-item label="课程资料:">
+                    <el-upload
+                        class="upload-demo"
+                        :action=" `${baseUrl}`+'/material/upload/material'"
+                        :data="dataform"
+                        :before-upload="beforeRemovecode"
+                        :on-success="handleAvatarSuccess"
+                        :show-file-list="false">
+                      <el-button size="mini" type="primary">点击上传</el-button>
+                       <span style="font-size:16;color:#c7cad1">{{fileName}}</span>
+                      <span style="font-size:12;color:#c7cad1">(非必传)</span>
+                    </el-upload> 
+            </el-form-item>
+          </el-form>    
+        <el-col :span="24">
+        <div style="float:right;margin-top:40px">
+          <el-button type="primary" size="mini" @click="backStep">上一步</el-button>
+          <el-button type="primary" size="mini" @click='savekeep'  >保存</el-button>
+        </div>
+      </el-col>
+    </el-col>
+  </el-row>
+</template>
+
+
+<script>
+//let id = 1000
+import axios from 'axios'
+  import E from 'wangeditor'
+ import {baseUrl} from '../../../static/baseurl'
+ import Edit from '@/components/edit'
+import {
+  courseStructurepage,
+  courseClassificationpage,
+  courseContentpage,
+  resourceaddmanagement,
+  resourceupdatamanagement,
+  resoureNamefindid, //根据名字去查询创建基础信息的id
+  resourceManagementobject, //编辑的时候根据id拿到详细
+  resourceaddconcent,//文档
+  questionclassifylist,
+  examinationqusetionlist,
+  resourceuploadfile,
+  checkManagementName,
+  resourceAllocation,
+  imagefindclouds,
+  kubernetesTemplates,
+  openstackTemplates,
+  resourceaddallocation,
+  addcourseMaterial,
+
+} from "@/api/api";
+import { exists } from 'fs';
+export default {
+     name: 'editor',
+  data() {
+    const data = [
+      {
+        id: 1,
+        label: "内容树",
+        children: [
+          {
+            id: 4,
+            label: "实验目的",
+            name:"experimental_Obiective"
+          },
+          {
+            id: 5,
+            label: "实验内容",
+            name:'experimental_Principle',
+          },
+          {
+            id: 7,
+            label: "实验要求",
+            name:'experimental_environment'
+          },
+           {
+             id:8,
+             label:"准备知识",
+             name:'Prepare_knowledge'
+           },
+          {
+            id: 9,
+            label: "实验步骤",
+            name:'experimental_procedure'
+          },
+          {
+            id: 11,
+            label: "综合测试",
+            name:'synthetic_test'
+
+          },
+          {
+            id: 13,
+            label: "实验总结",
+            name:'experiment_summary'
+          }
+        ]
+      }
+    ];
+    return {
+     editorContent: '',
+     help1:'',
+      fileName:'',
+      dataform: {//上传前拦截加一个参数
+             token:'',
+      },
+       kubernetesTdata:[],
+      Cloudinformationdata:[],
+      repetitionName:false,
+      vitualform:{
+           imageId:'',
+           allocationAdd:'',
+      },
+      tableDatewuestion:[],
+      formStructuredata: {
+        //其他信息
+        courseStructureId: "", //体系id
+        courseClassificationId: "", //分类id
+        courseContentId: "", ////内容id
+        selectedOptions:[],
+      },
+
+      teststep:true,
+      stepvule:'',
+      id:1000,
+      active:"experimental_Obiective",
+      index: 0,
+      resourceManagementId: "", //添加基本信息成功后存一个id添加其他的信息
+      testformdeilrules: {
+        resourceManagementName: [
+          { required: true, message: "请输入实验名称", trigger: "blur" }
+        ],
+        experimentalTime: [
+          { required: true, message: "请输入实验时长", trigger: "blur" }
+        ],
+        resourceOrder: [
+          { required: true, message: "请输入实验排序", trigger: "blur" }
+        ],
+        selectedOptions: [
+          {  type: "array",required: true, message: "请输入实验排序", trigger: "change" }
+        ]
+      },
+      showstepName: "实验目的",
+      treeStep: {
+        steepName: "" //步骤调的名字,
+      },
+      dialogTest: false, //编辑器的步骤显示
+      markdownedit: {
+        //编辑器
+        analysis:{
+             experimental_Obiective:'',
+             experimental_Principle:"",
+             experimental_environment:'',
+             synthetic_test:"",
+             experiment_summary:'',
+             experimental_procedure:'',
+             articlesteps:[
+                 
+             ],
+
+          },
+      },
+      treedata: JSON.parse(JSON.stringify(data)),
+      defaultProps: {
+        children: "children",
+        label: "label"
+      },
+      activeSteps: 1,
+      testformdeil: {
+        resourceManagementName: "",
+        resourceManagementDesc: "",
+        experimentalTime: "",
+        resourceOrder: "",
+        selectedOptions: []
+      },
+      selectedOptions:[],
+      dataStep: {}, //存当前的
+      steptree: false,
+      childrenedit: [], //存当前点击的时候是否孩子
+      indexedit: null, //存下标
+      editissdd: false,
+      childrens:[],
+      datamodel:[],
+      optionstixi:[],
+      courseContentdata:[],
+      QuestiontableData:[],
+      queationiddata:[],
+      baseUrl,
+      optionselect:[],
+       Stairarryindex: [],
+       materialUri:'',
+       materialUrl:'',
+    };
+  },
+  components: { Edit },
+  methods: {
+         getContent: function () {
+            alert(this.editorContent)
+        },
+      
+        editChange(e) {
+          console.log(e)
+          if(this.teststep===true) {
+            this.markdownedit.analysis[this.active]=e
+          } else {
+            this.childrens[this.index].value = e
+          }
+            
+          console.log(this.markdownedit)
+
+
+        },
+         $imgAdd(pos, $file){
+            
+ 
+        console.log('imgAdd', pos, $file);
+              //  var formdata = new FormData();
+              //   formdata.append('file', $file);
+              //   axios({
+              //           url:'http://192.168.80.11:20005/api/resource/upload/file',
+              //           method: 'post',
+              //           data: formdata,
+              //           headers: { 'Content-Type': 'multipart/form-data' }
+                        
+              //       }).then((res)=>{
+              //       console.log('11111111111111111111111');
+              //               console.log(res);
+              //   })
+
+         var f=new FormData(),
+            x=new XMLHttpRequest();
+            x.open("post",`${baseUrl}`+'/resource/upload/file');
+            f.append('file',$file);
+            x.send(f);
+            x.onload = function(e) {
+                console.log("-------")
+                console.log(e.currentTarget.response)
+                // $vm.$img2Url(pos, url);
+             var res=JSON.parse(e.currentTarget.response)
+               console.log(res)
+               if(res.code==0){
+                    
+               }
+
+            }
+
+
+
+
+         },
+         leveblur(){//验证实验名称
+               var parms={
+                    resourceManagementName:this.testformdeil.resourceManagementName
+               }
+              if(this.testformdeil.resourceManagementName !==''){
+                 checkManagementName(parms).then(res=>{
+                      console.log(res)
+                       if(res.data.code==-1){
+                            this.repetitionName=true
+                       }else{
+                            this.repetitionName=false
+                       }
+                 })  
+              }    
+         },
+          handleSelectionChange(val){
+             for(var i=0;i<val.length;i++){
+                 this.queationiddata.push(val[i].examinationQuestionId)
+             }
+          },
+
+          getqusetionlist(){
+              var parms={
+                    currPage:1,
+                    pageSize:100000,
+                   structureId:this.formStructuredata.courseStructureId,
+                   classifyId:this.formStructuredata.courseClassificationId
+              }
+            examinationqusetionlist(parms).then(res=>{
+                    if(res.data.code==0){
+                        this.QuestiontableData=res.data.data.list
+                        //this.paggtatol=res.data.data.total
+                        console.log("试题的别表")
+                        console.log(this.QuestiontableData)
+                    }
+            })  
+      },
+     Seachques(){
+            this.getqusetionlist()  
+     },
+      getcourseStructurepage() {
+      //体系
+      var params = {
+        currentPage: 1,
+        pageSize: 100
+      };
+      courseStructurepage(params).then(res => {
+        if (res.data.code == 0) {
+          console.log("体系");
+          console.log(res);
+          this.optionstixi = res.data.data.list;
+          this.optionstixi.forEach((item, index) => {
+            item.name = item.courseStructureName;
+          });
+        }
+      });
+    },
+
+
+    changeseleval(val) {
+      //分类
+      var parms = {
+        currentPage: 1,
+        pageSize: 1000,
+        courseStructureId: val
+      };
+      courseClassificationpage(parms).then(res => {
+        if (res.data.code == 0) {
+          this.datamodel = res.data.data.list;
+        }
+      });
+    },
+   changeconcent(val) {
+      //模块
+      var parms = {
+        currentPage: 1,
+        pageSize: 1000,
+        courseClassificationId: val
+      };
+      courseContentpage(parms).then(res => {
+        if (res.data.code == 0) {
+          this.courseContentdata = res.data.data.list;
+        }
+      });
+    },
+
+    append(node, data) {
+      //添加节点
+      this.dialogTest = true;
+      this.dataStep = data;
+      this.editissdd = false; //判断是编辑的时候,还是新增的时候!
+    },
+    currentchange(data, node) {
+       this.childrens = node.parent.data.children;
+       console.log(this.childrens)
+       this.index = this.childrens.findIndex(item => item.id === data.id); //在数组中找对应的,
+      if (data.label == "内容树" ) {
+      } else {
+            if(data.id>999){
+                console.log("suoyin")
+                console.log(this.active)
+                console.log(this.index)
+                  this.showstepName = data.label;
+                   this.active=data.name
+                    this.teststep=false
+            }else {
+              // this.text = this.markdownedit.analysis[this.active]
+                this.showstepName = data.label;
+                this.active=data.name
+                console.log(this.markdownedit)
+                this.teststep=true
+            }
+        }
+    },
+
+    closediglog() {
+      this.treeStep.steepName = ""; //关闭的时候清空`
+    },
+    submitStepName() {
+      //步骤的提交名字
+      console.log(this.childrenedit);
+      const newChild = { id: this.id++, label: this.treeStep.steepName,value:"" };
+      console.log(this.dataStep);
+
+      if (this.editissdd == false) {
+        this.$refs["treeStep"].validate(valid => {
+          if (valid) {
+            if (!this.dataStep.children) {
+              this.$set(this.dataStep, "children", []);
+            }
+            this.dialogTest = false;
+            setTimeout(() => {
+              this.dataStep.children.push(newChild); //添加孩子
+            }, 500);
+          }
+        });
+      } else {
+        this.$refs["treeStep"].validate(valid => {
+          if (valid) {
+            if (!this.dataStep.children) {
+              this.$set(this.dataStep, "children", []);
+            }
+            this.dialogTest = false;
+             this.childrenedit[this.indexedit].label=this.treeStep.steepName
+          }
+        });
+      }
+    },
+    remove(node, data) {
+      //移除子节点
+      this.$confirm("此操作将永久改步骤以及编辑的内容, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      }).then(() => {
+        const parent = node.parent;
+        const children = parent.data.children || parent.data;
+        const index = children.findIndex(d => d.id === data.id);
+        children.splice(index, 1);
+      });
+    },
+    edittree(node, data) {
+      //编辑的时候
+      console.log(node)
+      console.log(data)
+      this.childrenedit = node.parent.data.children;
+      this.indexedit = this.childrenedit.findIndex(item => item.id === data.id); //在数组中找对应的,
+      this.dialogTest = true;
+      this.treeStep.steepName = data.label;
+      this.editissdd = true;
+    },
+    selecttab(index) {
+      console.log(index.label);
+    },
+    changeval(val) {
+     // this.formvideo.courseContentId = this.formvideo.selectedOptions[2];
+    },
+    focusdata() {
+      var params = {
+        currentPage: 1,
+        pageSize: 100
+      };
+      courseStructurepage(params).then(res => {
+        if (res.data.code == 0) {
+          let lists = res.data.data.list;
+          lists.forEach((item, index) => {
+            this.optionselect.push({
+              label: item.courseStructureName,
+              value: item.courseStructureId,
+              children: []
+            });
+            this.Stairarryindex = this.optionselect;
+          });
+          this.Stairarryindex.forEach((item, indexcas) => {
+            var parms = {
+              currentPage: 1,
+              pageSize: 1000,
+              courseStructureId: this.optionselect[indexcas].value
+            };
+            courseClassificationpage(parms).then(res => {
+              let cascChid = [];
+              cascChid = res.data.data.list;
+              var _this = this;
+              if (res.data.code == 0) {
+                cascChid.forEach((item, index) => {
+                  this.optionselect[indexcas].children.push({
+                    label: item.courseClassificationName,
+                    value: item.courseClassificationId,
+                    children: []
+                  });
+                  var parms = {
+                    currentPage: 1,
+                    pageSize: 1000,
+                    courseClassificationId: this.optionselect[indexcas]
+                      .children[index].value
+                  };
+                  let conentchid = [];
+                  courseContentpage(parms).then(res => {
+                    conentchid = res.data.data.list;
+                    conentchid.forEach((item, contentindex) => {
+                      this.optionselect[indexcas].children[index].children.push(
+                        {
+                          label: item.courseContentName,
+                          value: item.courseContentId
+                        }
+                      );
+                    });
+                  });
+                });
+              }
+            });
+          });
+        }
+      });
+    },
+    basicnext() {
+      //点击下一步
+      console.log(this.$route.params)
+      if (this.activeSteps == 1 && this.$route.params.id == "isadd") {//新增的时候必须走这一步
+        this.testformdeil.courseStructureId = this.testformdeil.selectedOptions[0];
+        this.testformdeil.courseClassificationId = this.testformdeil.selectedOptions[1];
+        this.testformdeil.courseContentId = this.testformdeil.selectedOptions[2];
+        this.$refs["testformdeil"].validate(valid => {
+          if (valid &&this.repetitionName==false) {
+            resourceaddmanagement(this.testformdeil).then(res => {
+              if (res.data.code == 0) {
+                var parms = {
+                  resourceManagementName: this.testformdeil
+                    .resourceManagementName
+                };
+                resoureNamefindid(parms).then(res => {
+                  if (res.data.code == 0) {
+                    if (res.data.data !== null) {
+                      this.resourceManagementId =
+                        res.data.data.resourceManagementId;
+                       this.activeSteps = this.activeSteps + 1; //存好后进入下一步
+                    }
+                  }
+                });
+                //
+              } else {
+                      this.$message.error(res.data.message);    
+              }
+            });
+          }
+        });
+      } else if(this.activeSteps===1 && this.$route.params.id !== "isadd"){//bianji
+              console.log("--bianjidwdwdw--");
+               this.testformdeil.resourceManagementId=this.resourceManagementId
+               var parms=this.testformdeil
+              console.log(this.resourceManagementId);
+               resourceupdatamanagement(parms).then(res=>{
+                 console.log(parms)
+                  console.log(res)
+                   if(res.data.code==0){
+                         this.activeSteps = this.activeSteps + 1; //编辑的时候,
+                   }else{
+                       this.$message.error(res.data.message)
+                   }
+               }) 
+          }else if(this.activeSteps===2){
+                console.log("第二")
+                console.log(this.markdownedit)
+                if(JSON.stringify(this.dataStep) =='{}'){
+                     //  this.activeSteps = this.activeSteps + 1; 
+                //     var parmsss={
+                //        resourceManagementId:this.resourceManagementId,//创建时候生成的id
+                //        experimentalObjective:this.markdownedit.analysis.experimental_Obiective,
+                //        experimentalContext:this.markdownedit.analysis.experimental_Principle,
+                //        experimentalRequirements:this.markdownedit.analysis.experimental_environment,
+                //        prepareKnowledge:this.markdownedit.analysis.Prepare_knowledge,
+                //        experimentSummary:this.markdownedit.analysis.experiment_summary,
+                //        experimentTestId:this.queationiddata.join(','),
+                //         resourceSteps:[],
+                // }
+                // resourceaddconcent(JSON.stringify(parmsss)).then(res=>{
+                //         console.log("---z没有孩子---")
+                //         console.log(res)
+                //         if(res.data.code==0){
+                //             this.activeSteps = this.activeSteps + 1; 
+                //            }else{
+                //                 this.$message.error(res.data.message)
+                //            }
+                //     }) 
+                   this.activeSteps = this.activeSteps + 1; 
+
+                }else{
+                  // this.activeSteps = this.activeSteps + 1; 
+                const steps=[]
+                 for(var i=0;i<this.dataStep.children.length;i++){
+                       steps.push({
+                              procedureName:this.dataStep.children[i].label,
+                              procedureContent:this.dataStep.children[i].value
+                       })
+                 }
+                var parmsss={
+                       resourceManagementId:this.resourceManagementId,//创建时候生成的id
+                       experimentalObjective:this.markdownedit.analysis.experimental_Obiective,
+                       experimentalContext:this.markdownedit.analysis.experimental_Principle,
+                       experimentalRequirements:this.markdownedit.analysis.experimental_environment,
+                       prepareKnowledge:this.markdownedit.analysis.Prepare_knowledge,
+                       experimentSummary:this.markdownedit.analysis.experiment_summary,
+                       experimentTestId:this.queationiddata.join(','),
+                       resourceSteps:steps
+                }
+                console.log("发给你的值")
+                console.log(parmsss)
+                resourceaddconcent(parmsss).then(res=>{
+                        console.log("---zerngjiadierbu---")
+                        console.log(res)
+                       if(res.data.code==0){
+                            this.activeSteps = this.activeSteps + 1; 
+                        }else{
+                               this.$message.error(res.data.message)
+                        }
+                })  
+              }
+          }
+    },
+    geteditlist() {
+      var parms = {
+        resourceManagementId: this.$route.params.id
+      };
+      resourceManagementobject(parms).then(res => {
+        if (res.data.code == 0) {
+          console.log("--bianjide shuju--");
+          console.log(res);
+            this.testformdeil.resourceManagementName=res.data.data.resourceManagementName;
+            this.testformdeil.resourceManagementDesc=res.data.data.resourceManagementDesc;
+            this.testformdeil.experimentalTime=res.data.data.experimentalTime;
+            this.testformdeil.resourceOrder=res.data.data.resourceOrder;
+            this.resourceManagementId =res.data.data.resourceManagementId;
+            this.testformdeil.selectedOptions=[
+                res.data.data.courseStructureId,
+                res.data.data.courseClassificationId,
+                res.data.data.courseContentId
+            ]
+         }
+      });
+      resourceAllocation(parms).then(res=>{
+        console.log("编辑的额饿的的的对象")
+        console.log(res)
+
+      })
+
+
+    },
+
+    backStep() {
+      //点击上一步
+      this.activeSteps = this.activeSteps - 1;
+    },
+     getfindcloud(){//获取系统云信息
+            imagefindclouds().then(res=>{
+                console.log('系统云信息')
+                 console.log(res)
+                    if(res.data.code==0){
+                            this.Cloudinformationdata=res.data.data
+                    }        
+            })
+           console.log("==============")
+            console.log(this.Cloudinformationdata)
+       },
+      changecloud(val){//切换openstack//openstack
+             console.log(val)
+              this.kubernetesTdata=[]
+             if(val==0) {
+                 kubernetesTemplates().then(res=>{
+                      //this.kubernetesTdata= 
+                      console.log('===')
+                      console.log(res)
+                       if(res.data.code==0){
+                           this.kubernetesTdata=res.data.data
+                       }
+                 })   
+             }else if(val==1){
+                    openstackTemplates().then(res=>{//openstackTemplates
+                            if(res.data.code==0){
+                                this.kubernetesTdata=res.data.data 
+                            } 
+                    })         
+         }   
+      },
+      saveover(){//最后一步发送数据
+            var parms={
+                   resourceContentId:this.resourceManagementId,
+                   allocationAdd:this.vitualform.imageId,
+                   imageId:this.vitualform.allocationAdd
+            }
+           resourceaddallocation(parms).then(res=>{
+                if(res.data.code==0){
+                        this.activeSteps = this.activeSteps + 1; //编辑的时候, 
+                     // this.$router.push('/TestList')   
+                }else{
+                     this.$message.error(res.data.message)
+                }
+           })
+      },
+       beforeRemovecode(){//上传前加一个参数
+                    const token = sessionStorage.getItem("token");
+                     this.dataform.token=token
+            },
+        handleAvatarSuccess(res,file){//上传成功
+                     console.log("上传")
+                     console.log(res)
+                     console.log(file)
+                     if(res.code==0){
+                          this.fileName=file.name
+                          this.materialUri=res.data.materialUri
+                          this.materialUrl=res.data.materialUrl
+                     }else{
+                          this.$message.error(res.message)
+                     }
+            },
+         savekeep(){//保存
+                var params={
+                         courseMaterialName:this.fileName,
+                         materialUri:this.materialUri,
+                         materialUrl:this.materialUrl,
+                         resourceManagementId:this.resourceManagementId,
+                         courseMaterialOrder:this.testformdeil.resourceOrder,
+                         courseStructureId:this.testformdeil.selectedOptions[0],
+                         courseClassificationId:this.testformdeil.selectedOptions[1],
+                         courseContentId:this.testformdeil.selectedOptions[2],
+                   }
+
+              if(this.fileName==''){
+                     this.$confirm('没有上传课件, 确认是否完成?', '提示', {
+                          confirmButtonText: '是',
+                          cancelButtonText: '否',
+                          type: 'warning'
+                        }).then(() => {
+                            this.$router.push('/TestList')    
+                        }).catch(() => {
+                          this.$message({
+                            type: 'info',
+                            message: '已取消'
+                          }); 
+
+                        });
+              }else{
+                   addcourseMaterial(params).then(res=>{
+                          console.log(res)
+                          if(res.data.code===0){
+                               this.$router.push('/TestList')    
+                          }else{
+                              this.$message.error(res.data.message)
+                          }
+                    })
+
+              }
+
+
+         }
+
+
+  },
+  mounted() {
+   // let editor = new WangEditor('#editorMenu','#editor')
+    //  var editor = new E(this.$refs.editor)
+    //     editor.customConfig.onchange = (html) => {
+    //       this.editorContent = html
+    //     }
+    //  editor.create()
+    //  editor.txt.html('<p>用 JS 设置的内容</p>')
+   this.getfindcloud();
+   this.getcourseStructurepage();
+    this.focusdata();
+    console.log("路由-----");
+    console.log(this.$route);
+    if (this.$route.params.id != "isadd") {
+      console.log("进来了");
+      this.geteditlist();
+    };
+   }
+};
+</script>
+
+<style  lang='scss' scoped>
+.addtest {
+  .conctentedit {
+    height: 400px;
+
+    margin-top: 20px;
+    border: 1px solid #ebebeb;
+  }
+  .mavom_editor {
+    margin: 0px 20px;
+    height: 350px;
+    overflow-y: auto;
+    border: 1px solid #ebebeb;
+  }
+  .concentborderleft {
+    height: 380px;
+    border-bottom: 1px solid #ebebeb;
+    border-right: 1px solid #ebebeb;
+  }
+  .testName {
+    margin-left: 20px;
+    border: 1px solid #ebebeb;
+    font-family: "微软雅黑";
+    color: #606266;
+    border-top: 0px;
+    border-bottom: 0px;
+    width: 100px;
+    text-align: center;
+    font-size: 16px;
+    height: 30px;
+    line-height: 30px;
+  }
+  .virtualMachine {
+    color: #606266;
+    font-family: "微软雅黑";
+    font-size: 18px;
+  }
+}
+</style>
+<style>
+.testformdeil .el-form-item__content {
+  width: 600px;
+}
+.blockcaser .el-cascader {
+  width: 100%;
+}
+.custom-tree-node {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  padding-right: 8px;
+}
+</style>

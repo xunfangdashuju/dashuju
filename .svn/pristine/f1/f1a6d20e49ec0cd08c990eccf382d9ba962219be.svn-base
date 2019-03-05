@@ -1,0 +1,285 @@
+<template>
+  <el-row>
+    <el-col :span="24">
+      <div class="navigationbar">
+        <span class="navigationname">
+          权限管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          班级管理
+        </span>
+      </div>
+    </el-col>
+    <el-col :span="24">
+      <el-form :inline="true" class="demo-form-inline" size="small">
+        <el-form-item label="查询:">
+          <el-input v-model="seachcondition" placeholder="输入查询班级或编号"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary">查询</el-button>
+        </el-form-item>
+        <el-form-item style="margin-left:80px;">
+          <el-button type="primary" icon="el-icon-plus" @click="addclass">添加</el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button size="small" icon='el-icon-upload2'  @click="batckdown" type="success">导入模版</el-button>
+        </el-form-item>
+      </el-form>
+      <el-dialog
+        @close="closedialog"
+        :visible.sync="calssDialogVisible"
+        :title="classedit"
+        width="30%"
+      >
+        <el-form
+          :rules="rules"
+          :inline="true"
+          :model="addclassform"
+          ref="classformdata"
+          class="demo-form-inline"
+          size="small"
+          label-width="120px"
+        >
+          <el-form-item label="班级编号" prop="code">
+            <el-input v-model="addclassform.code" placeholder="请输入班级编号"></el-input>
+          </el-form-item>
+          <el-form-item label="班级名称" prop="name">
+            <el-input v-model="addclassform.name" placeholder="请输入班级名称"></el-input>
+          </el-form-item>
+          <el-form-item label="班级人数" prop="num">
+            <el-input v-model="addclassform.num" placeholder="请输入班级人数"></el-input>
+          </el-form-item>
+          <el-form-item label="班级备注">
+            <el-input v-model="addclassform.description"></el-input>
+          </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <!-- <el-button @click="calssDialogVisible = false" size='mini'>取 消</el-button> -->
+          <el-button type="primary" @click="sureadd" size="mini">确 定</el-button>
+        </span>
+      </el-dialog>
+    </el-col>
+    <el-col :span="24">
+      <el-table :data="ClasstableData" size="mini" border stripe style="width: 100%">
+        <el-table-column prop="code" label="班级编号" width="80"></el-table-column>
+        <el-table-column prop="name" label="班级名称" width="180"></el-table-column>
+        <el-table-column prop="num" width="80px" label="班级人数"></el-table-column>
+        <el-table-column label="所属老师" > 
+             <template  slot-scope="scope">
+               <span v-for='(item,index) in scope.row.teacher' :key='index' style="margin-left:5px">
+                     {{item}} 
+               </span>
+             </template>
+        </el-table-column>
+        <el-table-column prop="description" label="备注"></el-table-column>
+        <el-table-column width="260px" label="操作">
+          <template slot-scope="scope">
+            <el-button type="danger" @click="delect(scope.row)" size="mini">删除</el-button>
+            <el-button type="primary" size="mini" @click="edit(scope.row)">编辑</el-button>
+            <el-upload
+              style="display:inline-block"
+              :action="uploadurl"
+              accept=".xlsx, .xls"
+              :show-file-list="false"
+              :on-success="handleAvatarSuccess"
+              :data="dataform"
+              :before-upload="beforeAvatarUpload"
+            >
+              <el-button size="mini" style="margin-left:10px" type="success">批量导入</el-button>
+            </el-upload>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-col>
+    <el-col :span="24">
+      <page-compent
+           
+            :pagetotal="paggtatol"
+            :pageSize="pageSize"
+            @currentpage="pageIndexChange"
+      ></page-compent>
+    </el-col>
+  </el-row>
+</template>
+
+<script>
+import { baseUrl } from "../../../static/baseurl";
+import { classadd, classlist, classlistdelete, classupdata } from "@/api/api";
+import pageCompent from "@/components/pagintion";
+export default {
+  inject: ["reload"], //刷新
+  components: {
+    pageCompent
+  },
+
+  data() {
+    return {
+        baseUrl,
+         uploadurl:baseUrl+"/user/import/users",
+      editid: "",
+      isadd: true,
+      paggtatol: null,
+      classedit: "",
+      seachcondition: "", //查询条件
+      ClasstableData: [], //班级表格
+      calssDialogVisible: false,
+      addclassform: {
+        code: "",
+        name: "",
+        num: "",
+        description: ""
+      },
+      rules: {
+        code: [
+          { required: true, message: "请输入班级编号", trigger: "blur" },
+          { pattern: /^[^\u4e00-\u9fa5]+$/, message: "不能输入汉字" }
+        ],
+        name: [{ required: true, message: "输入班级名称", trigger: "blur" }],
+        num: [
+          { required: true, message: "输入班级人数", trigger: "blur" },
+          { pattern: /^[1-9]+\d*$/, message: "大于0的数字" }
+        ]
+      },
+      currPage: 1,
+      pageSize: 10,
+      dataform: {
+        token: "",
+        classId: ""
+      }
+    };
+  },
+  methods: {
+    batckdown() {
+      //批量下载模版
+      window.location.href =
+        `${baseUrl}` + "/file/template/user/userImportTemplate.xlsx";
+    },
+    handleAvatarSuccess(res, file) {
+      console.log("上传");
+      console.log(res);
+      console.log(file);
+
+      if (res.code == 0) {
+        this.$message({
+          type: "success",
+          message: res.data
+        });
+      } else {
+        this.$message.error(res.message);
+      }
+    },
+    beforeAvatarUpload() {
+      const token = sessionStorage.getItem("token");
+      this.dataform.token = token;
+      this.dataform.classId = this.editid;
+    },
+
+    addclass() {
+      //添加课程
+      this.isadd = true;
+      this.calssDialogVisible = true;
+      this.classedit = "添加班级";
+    },
+    sureadd() {
+      //添加班级数据
+      var parms = this.addclassform;
+      if (this.isadd) {
+        this.$refs["classformdata"].validate(valid => {
+          if (valid) {
+            classadd(parms).then(res => {
+              if (res.data.code == 0) {
+                this.calssDialogVisible = false;
+                this.$message({
+                  type: "success",
+                  message: "添加成功"
+                });
+                this.getclasslist();
+              } else {
+                this.$message.error(res.data.message);
+              }
+            });
+          }
+        });
+      } else {
+        this.addclassform.id = this.editid;
+        this.$refs["classformdata"].validate(valid => {
+          if (valid) {
+            classupdata(parms).then(res => {
+              console.log(res);
+              if (res.data.code == 0) {
+                this.calssDialogVisible = false;
+                this.$message({
+                  type: "success",
+                  message: "编辑成功"
+                });
+                this.getclasslist();
+              } else {
+                this.$message.error(res.data.message);
+              }
+            });
+          }
+        });
+      }
+    },
+    getclasslist() {
+      var parms = {
+        currPage: this.currPage,
+        pageSize: this.pageSize
+      };
+      classlist(parms).then(res => {
+        console.log(res);
+        if (res.data.code == 0) {
+          this.ClasstableData = res.data.data.list;
+          this.paggtatol = res.data.data.total;
+        }
+      });
+    },
+    pageIndexChange(index) {
+      this.currPage = index;
+      this.getclasslist();
+    },
+    delect(index) {
+      //
+      console.log(index);
+      var parms = {
+        classId: index.id
+      };
+      this.$confirm("此操作将永久删除该文件, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+        .then(() => {
+          classlistdelete(parms).then(res => {
+            if (res.data.code == 0) {
+              this.getclasslist();
+            } else {
+              this.$message.error(res.data.message);
+            }
+          });
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "已取消删除"
+          });
+        });
+    },
+    edit(index) {
+      this.calssDialogVisible = true;
+      this.isadd = false;
+      console.log(index);
+      this.addclassform = index;
+      this.editid = index.id;
+    },
+    closedialog() {
+      this.reload();
+    }
+  },
+  mounted() {
+    this.getclasslist();
+  }
+};
+</script>
+
+<style lang="scss" scoped>
+</style>

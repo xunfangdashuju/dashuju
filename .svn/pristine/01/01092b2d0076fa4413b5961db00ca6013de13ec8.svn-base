@@ -1,0 +1,285 @@
+<template>
+  <el-row>
+    <el-col>
+      <div class="navigationbar">
+        <span class="navigationname">
+          在线考试管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          试卷增加
+        </span>
+      </div>
+    </el-col>
+    <el-col :span='24' >
+         <el-steps :active="active" finish-status="success"  :space="200"   simple>
+                <el-step title="基本信息"></el-step>
+                <el-step title="试题管理"></el-step>
+        </el-steps>
+    </el-col> 
+    <el-col :span='24' v-show="active==1">
+           <el-form  :model="testpaper"   label-width="160px"  class="testpaper" :rules="rules" ref='testpaper'>
+                     <el-form-item  label='试卷名称:' prop='paperName' >
+                            <el-input v-model='testpaper.paperName' placeholder="试卷名称"></el-input>  
+                     </el-form-item>
+                     <el-form-item label="考试难度:" >
+                        <el-radio-group v-model="testpaper.paperDifficulty">
+                                <el-radio :label="1">初级</el-radio>
+                                <el-radio :label="2">中级</el-radio>
+                                <el-radio :label="3">高级</el-radio>
+                            </el-radio-group>
+                     </el-form-item>
+                     <el-form-item  label="考试时间:" prop="lengthTime">
+                          <el-input v-model.number='testpaper.lengthTime' 
+                             placeholder="列如 :30" >
+                          </el-input>
+                     </el-form-item>
+                     <el-form-item label='试卷描述:' prop='paperDesc'>
+                             <el-input
+                                type="textarea"
+                                :autosize="{ minRows: 2, maxRows: 4}"
+                                placeholder="请输入内容"
+                                v-model="testpaper.paperDesc">
+                             </el-input>
+                     </el-form-item>
+                     <el-form-item>
+                           <el-button type="primary" size='mini' style="margin-left:80px;" @click="testNext">下一步</el-button>
+                     </el-form-item>
+          </el-form>    
+    </el-col>   
+    <el-col :span='24'  v-show="active==2" >
+              <el-form :inline="true" style="margin-top:20px"  size="small" :model="formStructuredata">
+                        <el-form-item
+                        label="试题体系:"
+                        >
+                        <el-select
+                            v-model="formStructuredata.structureId"
+                            placeholder="请选择体系"
+                          >
+                            <el-option
+                            v-for="item in optionstixi"
+                            :key="item.createTime"
+                            :label="item.courseStructureName"
+                            :value="item.courseStructureId"
+                            ></el-option>
+                        </el-select>
+                        </el-form-item>
+                        <el-form-item>
+                              <el-input v-model='formStructuredata.questionName'  placeholder='考题描述搜索'></el-input>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type='primary'  icon="el-icon-search"  @click="search">查询</el-button>
+                        </el-form-item>
+              </el-form>
+   
+    <el-col :span='24'>
+            <el-col :span='12'>
+                    <el-table
+                            size="mini"
+                            height="300"
+                            border
+                            ref="multipleTable"
+                            :data="tableDatachecked"
+                            tooltip-effect="dark"
+                            style="width: 100%"
+                           
+                            @selection-change="SelectionChangecheck">
+                        <el-table-column
+                             type="selection"
+                             :reserve-selection="true"
+                         :selectable="checkSelectable"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label="试题描述"
+                            prop="questionName"
+                            show-overflow-tooltip
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="courseStructureName"
+                            label="试题体系"
+                            width="120">
+                        </el-table-column>
+                    </el-table>
+                    <el-button type="primary"  icon="el-icon-plus" size="mini" style="margin-top:20px" @click='addteatqustion'>添加试题</el-button>
+            </el-col>
+             <el-col  :span="12" >
+                     <el-table
+                            size="mini"
+                            height="300"
+                            border
+                            ref="multipleTable"
+                            :data="tableDataischecked"
+                            tooltip-effect="dark"
+                            style="width: 100%"
+                            @selection-change="SelectionChangecheck">
+                        <el-table-column
+                            type="selection"
+                            width="55">
+                        </el-table-column>
+                        <el-table-column
+                            label="试题描述"
+                            prop="questionName"
+                            show-overflow-tooltip
+                        >
+                        </el-table-column>
+                        <el-table-column
+                            prop="courseStructureName"
+                            label="试题体系"
+                            width="120">
+                        </el-table-column>
+                    </el-table>   
+             </el-col>
+      </el-col>
+ </el-col>
+  </el-row>
+</template>
+<script>
+import{
+        courseStructurepage,
+        courseClassificationpage,
+        courseContentpage,
+        questionclassifylist
+    }from '@/api/api'
+export default {
+       data(){
+            return{
+               rules:{
+                  paperName:[
+                       { required: true, message: '请输入试卷名称', trigger: 'blur' },
+                   ],
+                  lengthTime:[
+                      { required: true, message: '输入试卷考试时长', trigger: 'blur' },
+                       { type: 'number', message: '必须为数字值'}
+                  ],
+                  paperDesc:[
+                       { required: true, message: '输入试卷描述', trigger: 'blur' },
+                  ]
+               },
+                options:[],
+                value:'',
+                 active:1,  
+                 testpaper:{
+                         paperName:'', 
+                         paperDifficulty:1,
+                         lengthTime:'',
+                         paperDesc:"",
+                  },
+                  formStructuredata:{
+                        structureId:"",
+                        questionName:'',
+
+                  },
+                     optionstixi: [], //体系
+                     tableDatachecked:[],//选择框的题
+                     tableDataischecked:[],//选中的题
+                     addselect:[],//选中的时候准备添加的框.
+
+            }
+       },
+       methods:{
+            testNext(){//下一步
+                this.active=this.active+1 
+            //    if( this.active==1){
+            //        this.$refs['testpaper'].validate((valid)=>{
+            //                if(valid){
+            //                        this.active=this.active+1 
+            //                }
+            //        }) 
+            //     }      
+            },
+            getcourseStructurepage() {
+                //体系
+                var params = {
+                    currentPage: 1,
+                    pageSize: 100
+                };
+                courseStructurepage(params).then(res => {
+                    if (res.data.code == 0) {
+                    console.log("体系");
+                    console.log(res);
+                    this.optionstixi = res.data.data.list;
+                    this.optionstixi.forEach((item, index) => {
+                        item.name = item.courseStructureName;
+                    });
+                    }
+                  });
+                },
+             SelectionChangecheck(val){//选中的,试题
+                    this.addselect=val
+
+             },
+             search(){//搜索
+                   var parms=this.formStructuredata
+                questionclassifylist(parms).then(res=>{
+                      console.log(res)
+                      if(res.data.code==0){
+                           this.tableDatachecked=res.data.data
+                      }
+                })
+             },
+            addteatqustion(){//添加试题
+                 console.log(this.addselect)
+                 for(var i=0;i<this.addselect.length;i++){
+                    this.tableDataischecked.push(this.addselect[i])
+
+                 }
+             
+                // for( var k=0;k< this.tableDatachecked.length;k++){
+                //       for(var j=0;j< this.tableDataischecked.length;)
+                // }  
+
+
+            },
+           checkSelectable(row){
+                //  if(1>0){
+                //       return 1;//可选
+                //  }
+                
+                     console.log("6666")
+                     if(this.tableDataischecked.length==0){
+                         return 1;//不可选
+                     }else{
+                        for(var i=0;i<this.tableDatachecked.length;i++){
+                            for(var k=0; k<this.tableDataischecked.length;k++){
+                                if(this.tableDatachecked[i].examinationQuestionId===this.tableDataischecked[k].examinationQuestionId){
+                                    return 0;//不可选
+                                }else{
+                                    return 1;//可选
+                                }
+                            }
+
+                        }
+                     }
+                     console.log(this.tableDatachecked[i].examinationQuestionId==this.tableDataischecked[k].examinationQuestionId)
+
+
+           
+
+
+           },
+
+         
+
+       },
+       mounted(){
+                this.getcourseStructurepage()
+       }
+
+
+};
+</script>
+
+<style  lang='scss'   scoped>
+    .testpaper{
+           margin-top: 40px; 
+    }
+</style>
+<style>
+   .testpaper .el-input{
+        width: 300px;
+   }
+  .testpaper .el-textarea{
+       width: 300px;
+  }
+
+</style>

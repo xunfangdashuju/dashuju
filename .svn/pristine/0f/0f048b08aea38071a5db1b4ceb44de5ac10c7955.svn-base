@@ -1,0 +1,249 @@
+<template>
+  <el-container>
+    <el-header>
+      <span style="float:left;display:inline-block;font-size:16px;"><img src="../assets/imgs/logos.png" style="vertical-align:middle;margin-right:8px;" />讯方大数据</span>
+      <span style="float:right;display:inline-block">
+        <el-dropdown @command="handleCommand">
+          <span class="el-dropdown-link">
+            <i class="el-icon-setting" style="margin-right: 10px;color:#fff"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+             <el-dropdown-item command="d">首页</el-dropdown-item>
+            <el-dropdown-item command="a">退出</el-dropdown-item>
+            <el-dropdown-item command="c">管理后台</el-dropdown-item>
+            <el-dropdown-item command="b">修改密码</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+        <span>{{this.Username}}</span>
+      </span>
+    </el-header>
+    <el-container  v-if='judgeState==1' >
+      <el-aside width="200px">
+        <el-menu
+          :default-active="$route.path"
+          active-text-color="#f18f17"
+          text-color="#758c97"
+           :unique-opened="true" 
+           router
+        >
+          <template v-for=" (item,index) in routerurl">
+            <el-menu-item :key="item[0].routeUrl" :index='item[0].routeUrl' v-if="item[0].secondPermissionList.length==0">
+                  <template slot='title'>
+                  <i  :class="item[0].permissionIcon" class="fa  menuicon"></i>
+                  <span>
+                      {{item[0].permissionName}}
+                  </span>
+                  </template>
+              </el-menu-item>
+                  <el-submenu  :key="item.index"  :index='String(index)'   v-if="item[0].secondPermissionList.length !==0"    >
+                    <template slot='title'>
+                      <i  :class="item[0].permissionIcon" class="fa  menuicon"></i>   <span >{{item[0].permissionName}}</span>
+                  </template>
+                  <el-menu-item :key="item.index"  :index='item.routeUrl' v-for="item in item[0].secondPermissionList">
+                      <i  :class="item.permissionIcon" class="fa  menuicon"></i>{{item.permissionName}}
+                  </el-menu-item>
+              </el-submenu> 
+          </template>
+        </el-menu>
+      </el-aside>
+      <el-main>
+        <router-view></router-view>
+      </el-main>
+    </el-container>
+    <el-container v-else >
+           <div >
+                <div >体系分类:</div>
+           </div>
+          <hr/>
+
+    </el-container>
+
+
+
+
+
+           <el-dialog title="个人信息" :visible.sync="dialogmessage" width="30%">
+        <el-form
+          :model="formInline"
+          :rules="passwordrules"
+          ref="passwordrules"
+          class="demo-form-inline"
+          label-width="100px"
+        >
+          <el-form-item label="用户名">
+            <el-input v-model="formInline.userAccount" :disabled="true"></el-input>
+          </el-form-item>
+          <el-form-item label="原始密码" prop="old">
+            <el-input v-model="formInline.old" type="password" placeholder="6~20位非空白字符"></el-input>
+          </el-form-item>
+          <el-form-item label="新密码" prop="password">
+            <el-input v-model="formInline.password" placeholder="6~20位非空白字符"></el-input>
+          </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="dialogmessage = false" size="mini">取 消</el-button>
+          <el-button type="primary" size="mini" @click="Submitpassword">确 定</el-button>
+        </span>
+      </el-dialog>
+  </el-container>
+</template>
+<script>
+import { updatepassword,menulist} from "@/api/api";
+export default {
+  inject: ["reload"],
+  data() {
+    return { 
+
+      judgeState:false,
+      routerurl:{},
+      Username:"",//登录用户名
+      dialogmessage: false,
+      formInline: {
+        userAccount: "",
+        old: "",
+        password: ""
+      },
+      passwordrules: {
+        oldpassword: [
+          { required: true, message: "请输入原始密码", trigger: "blur" }
+        ],
+        newpassword: [
+          { required: true, message: "请输入新密码", trigger: "blur" },
+          { min: 6, max: 20, message: "密码最短6位最长20位", trigger: "blur" },
+          { pattern: /^[a-zA-Z0-9_]{0,}$/, message: "不能输入中文" }
+        ]
+      }
+    };
+  },
+  methods: {
+    handleCommand(command) {
+      console.log(command);
+      if (command == "a") {
+       sessionStorage.clear()
+        this.$router.push("/login");
+        window.location.reload();
+      } else if (command == "b") {
+          this.dialogmessage = true;
+          this.formInline.userAccount=this.Username
+      }
+      else if(command == "c"){
+        //   this.stageManagement=true; 
+           sessionStorage.setItem('stageManagement',1)    
+           this.reload() 
+       }else if(command == "d"){
+                 sessionStorage.setItem('stageManagement',2)     
+                  this.reload() 
+        }
+    },
+    Submitpassword(){//提交密码验证
+        this.$refs["passwordrules"].validate(valid => {
+        if (valid) {
+               updatepassword(this.formInline).then(res=>{
+                          console.log(res)
+                          if(res.data.code==0){
+                               this.$message({
+                                 type:'success',
+                                 message:'修改成功退出从新登录'
+                               })
+                               this.dialogmessage=false
+                               setTimeout(()=>{
+                                   this.$router.push("/Login");   
+                               },2000)
+                          }
+               })    
+           } 
+      });    
+    },
+     getmenulist() {//登录角色不同时候的菜单不同,
+
+      var parms = {
+        userAccount: this.Username
+      };
+      menulist(parms).then(res => {
+         console.log('菜单')
+          console.log(res)
+        if (res.data.code == 0) {
+          this.routerurl = res.data.data;
+        } else {
+          this.$router.push("/Login");
+        }
+      });
+    },
+    
+
+  },
+  mounted() {
+             this.Username = sessionStorage.getItem("username");//获取登录时候的登陆名称,
+             this.getmenulist()
+          this.judgeState  = sessionStorage.getItem('stageManagement')   
+            console.log('当前状态')
+            console.log(this.judgeState)
+            if( this.judgeState ===null){
+                   this.judgeState=1
+                   console.log("等于false")
+            }  
+             
+             
+  }
+};
+</script>
+<style lang="scss" scoped>
+.el-container {
+  height: 100%;
+
+  .el-header,
+  .el-footer {
+    background-color: #021f31;
+    color: #fff;
+    text-align: center;
+    line-height: 60px;
+  }
+  .el-aside {
+    height: 100%;
+    background: #3c3c3c;
+    color: #fff;
+    font-family: "Microsoft YaHei", "Arial Narrow", sans-serif;
+    .el-menu {
+      height: 100%;
+      // //background-color: #232424;
+      background: #021f31;
+      border: none;
+
+      .el-submenu {
+        //	border-bottom: 1px solid #3c3c3c;
+        .el-menu-item {
+          background-color: #353535;
+          font-family: "Microsoft YaHei", "Arial Narrow", sans-serif;
+        }
+      }
+      .el-menu-item.is-active {
+        background: #1d2e35;
+      }
+      .el-submenu :hover {
+        background: #035c86;
+      }
+
+      .collapseicon {
+        height: 60px;
+        background: #1b2c3e;
+        border: 1px solid #3c3c3c;
+        .logoname {
+          display: inline-block;
+          height: 60px;
+          line-height: 62px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+</style>
+<style>
+.el-menu-item,.el-submenu__title {
+  height: 44px;
+  line-height: 44px;
+}
+</style>
+
+
+

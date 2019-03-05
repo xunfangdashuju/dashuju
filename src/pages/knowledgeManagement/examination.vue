@@ -1,0 +1,195 @@
+<template>
+<el-row>
+ <el-col :span="24">
+      <div class="navigationbar">
+        <span class="navigationname">
+          在线考试管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          考题管理
+        </span>
+      </div>
+    </el-col>
+    <el-col :span='24'>
+          <el-form size='mini' :inline="true" >
+              <el-form-item>
+                <el-input  v-model='questionName'  placeholder='请输入查询题目'>
+                 <el-button slot="append" icon="el-icon-search"></el-button>
+                       </el-input>
+                 </el-form-item>
+                <el-form-item  style="margin-left:80px;">
+                        <el-button type="primary" icon='el-icon-plus' @click="addTestQuestion" >增加试题</el-button>
+                </el-form-item>
+                 <el-form-item>
+                       <a href="http://192.168.80.11:20005/api/file/template/temporary/试题批量导入模板.xlsx"> <el-button   icon='el-icon-download' >  批量导入模版</el-button></a>
+                </el-form-item>
+                 <el-form-item>
+                         <el-upload
+                           :data='dataform'
+                           :action="`${baseUrl}`+'/examination/question/import'"
+                           :on-success="handleAvatarSuccess"
+                           :before-upload="beforeAvatarUpload"
+                           :show-file-list="false">
+                            <el-button  type="primary"   icon='el-icon-upload2' >批量导入</el-button>
+                         </el-upload>
+                </el-form-item>   
+                <el-form-item >
+                       <el-button type='danger'  icon="el-icon-delete"  @click='batchdelect'>批量删除</el-button>
+                </el-form-item> 
+         </el-form>
+    </el-col>
+    <el-col :span='24'>
+             <el-table
+                 border
+                 stripe
+                 tooltip-effect="dark"
+                 size='mini'
+                 @selection-change="handleSelectionChange"
+                :data="QuestiontableData"
+                style="width: 100%">
+               <el-table-column 
+                   type="selection"
+                   width='55' >
+               </el-table-column>
+                <el-table-column
+                    prop="questionName"
+                    label="试题"
+                    >
+                </el-table-column>
+                <el-table-column
+                    prop="courseStructureName"
+                    label="所属体系"
+                    width="140">
+                </el-table-column>
+                <el-table-column
+                    width='180px'
+                    label='创建时间'>
+                    <template slot-scope="scope">
+                             {{timeFormattershowsecod(scope.row.createTime)}}       
+                    </template>
+                </el-table-column>
+                <el-table-column 
+                  width="180px"
+                  label='操作'>
+                   <template slot-scope="scope">
+                         <el-button @click="delect(scope.row)" size='mini' type="danger" >删除</el-button>
+                         <el-button @click="edit(scope.row)"  size='mini'>编辑</el-button>
+                   </template>
+                </el-table-column>
+            </el-table> 
+    </el-col>
+    <el-col :span="24">
+      <page-compent
+            :pagetotal="paggtatol"
+            :pageSize="pageSize"
+            @currentpage="pageIndexChange"
+      ></page-compent>
+    </el-col>
+
+</el-row>
+</template>
+
+<script>
+import{timeFormattershowsecod}from '@/assets/js/common' 
+import{examinationqusetionlist,questiondelete}from '@/api/api'
+import {baseUrl} from '../../../static/baseurl'
+ import pageCompent from "@/components/pagintion";
+    export default {
+        components: {
+            pageCompent
+        },
+         data(){
+             return{
+                  baseUrl,
+                  timeFormattershowsecod,
+                  QuestiontableData:[],
+                  questionName:"",
+                  currPage:1,
+                  pageSize:10,
+                  paggtatol:null,
+                  delectdata:[],//删除选中
+                  dataform:{
+                      token:"",
+                  },
+             }
+         },
+         methods:{
+              handleAvatarSuccess(res,file){
+                    if(res.code==0){
+                          this.$message({
+                               type:'success',
+                               message:'导入成功'
+                          })
+                    }else{
+                          this.$message.error(res.message)
+                    }
+              },
+              beforeAvatarUpload(){//上传前加参数
+                      const token = sessionStorage.getItem('token') 
+                      this.dataform.token=token
+              },
+              addTestQuestion(){//添加试题
+                     this.$router.push({name:'examinationcreat',params:{type:'add'}})
+              },
+              getqusetionlist(){
+                      var parms={
+                            currPage:this.currPage,
+                            pageSize:this.pageSize,
+                            questionName:this.questionName
+                      }
+                    examinationqusetionlist(parms).then(res=>{
+                            if(res.data.code==0){
+                                this.QuestiontableData=res.data.data.list
+                                this.paggtatol=res.data.data.total
+                            }
+                    })  
+              },
+              pageIndexChange(index){//翻页
+                   this.currPage=index
+                   this.getqusetionlist()    
+              },
+              handleSelectionChange(val){
+                         this.delectdata=[]
+                      val.forEach((item)=>{
+                         this.delectdata.push(item.examinationQuestionId) 
+                      }) 
+              },
+              delect(index){ 
+                 this.$confirm('此操作将永久删除该题, 是否继续?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                        }).then(() => {
+                                 
+                       
+                    })
+               },
+              batchdelect(){  
+                   var parms={questionId:this.delectdata}
+                     this.$confirm('此操作将永久删除所有选中的题, 是否继续?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                        }).then(() => {
+                       questiondelete(parms).then(res=>{
+                             console.log(res)
+                       })      
+                   
+                    })
+                       
+              },
+             edit(index){//bianji
+                     console.log(index) 
+                    this.$router.push({name:'examinationcreat',params:{type:index.examinationQuestionId}})        
+             }
+         },
+         mounted(){
+                this.getqusetionlist()
+
+
+         }
+    }
+</script>
+
+<style  lang='scss' scoped>
+
+</style>

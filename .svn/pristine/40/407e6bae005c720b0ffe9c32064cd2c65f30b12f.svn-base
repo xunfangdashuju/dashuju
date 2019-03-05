@@ -1,0 +1,323 @@
+<template>
+  <el-row class="addtest">
+    <el-col :span="24">
+      <div class="navigationbar">
+        <span class="navigationname">
+          实验平台管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          新增实验
+        </span>
+      </div>
+    </el-col>
+    <el-col :span="24">
+      <el-steps :active="activeSteps" simple>
+        <el-step title="基本信息" icon="el-icon-edit-outline"></el-step>
+        <el-step title="内容编辑" icon="el-icon-edit"></el-step>
+        <el-step title="虚拟机配置" icon="el-icon-picture"></el-step>
+      </el-steps>
+    </el-col>
+
+    <el-col :span="24" v-if="activeSteps==1">
+      <el-form :model="testformdeil" class="testformdeil" label-width="120px;" size="small">
+        <el-form-item label="实验名称:">
+          <el-input v-model="testformdeil.user" placeholder="实验名称"></el-input>
+        </el-form-item>
+        <el-form-item label="实验简介:">
+          <el-input v-model="testformdeil.user" placeholder="实验简介" type="textarea" :rows="2"></el-input>
+        </el-form-item>
+        <el-form-item label="实验时长:">
+          <el-input v-model="testformdeil.user" placeholder="实验时长 单位分钟" type="number"></el-input>
+        </el-form-item>
+        <el-form-item label="选择所属系:" prop="selectedOptions">
+          <div class="blockcaser">
+            <el-cascader
+              :options="optionselect"
+              v-model="testformdeil.selectedOptions"
+              @change="changeval"
+            ></el-cascader>
+          </div>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="small" @click="basicnext">下一步</el-button>
+        </el-form-item>
+      </el-form>
+    </el-col>
+    <el-col :span="24" v-if="activeSteps==2" class="conctentedit">
+      <el-col :span="8" class="conctentborder  concentborderleft">
+        <el-tree
+          :data="treedata"
+          node-key="id"
+          default-expand-all
+          :expand-on-click-node="false"
+        >
+          <span class="custom-tree-node" slot-scope="{ node, data }">
+            <span>{{ node.label }}</span>
+            <span>
+                  <span  v-if="node.data.label=='实验步骤'">
+                    <i class="el-icon-plus"  @click="() => append(node,data)" style="width:23px;"></i>
+                  </span>   
+                 <span v-if="node.data.id>999" >
+                         <i class="el-icon-edit-outline"   style="width:23px;"  @click="() => edittree(node, data)"></i>
+                </span> 
+                <span  v-if="node.data.label !=='内容树'">
+                    <i class="el-icon-delete"   @click="() => remove(node, data)"  ></i>
+                </span>   
+            </span>
+          </span>
+        </el-tree>
+          <el-dialog  
+              title="添加新的实验步骤"
+              width="120"
+              @close="closediglog"
+             :visible.sync="dialogTest">
+             <el-form  :model="treeStep"  ref="treeStep"  >
+                      <el-form-item  
+                      prop='steepName'
+                      :rules="[ { required: true, message: '请输入添加步骤的名字', trigger: 'blur' },]">
+                             <el-input v-model="treeStep.steepName"  placeholder="请输入步骤名字"></el-input>
+                      </el-form-item>
+             </el-form>
+            <span slot="footer" class="dialog-footer">
+                        <el-button @click="dialogTest = false" size='mini'>取 消</el-button>
+                        <el-button type="primary" @click="submitStepName" size='mini'>确 定</el-button>
+              </span> 
+
+          </el-dialog>
+      </el-col>
+      <el-col :span="16" class="conctentborder conctenteditor">
+           <mavon-editor v-model="markdownedit.analysis" :ishljs="true"  :subfield='false'    class='mavom_editor'  placeholder="试题解析....."/>
+      </el-col>
+    </el-col>
+  </el-row>
+</template>
+<script>
+let id = 1000;
+import {
+  courseStructurepage,
+  courseClassificationpage,
+  courseContentpage
+} from "@/api/api";
+export default {
+  data() {
+    const data = [
+      {
+        id: 1,
+        label: "内容树",
+        children: [
+          {
+            id: 4,
+            label: "实验目的",
+          },
+          {
+            id:5,
+            label:'实验原理'
+          },
+          {
+            id:7,
+            label:'实验环境'
+          },
+          {
+            id:9,
+            label:'实验步骤'
+          },
+          {
+            id:11,
+            label:'综合测试'
+          },
+          {
+             id:13,
+             label:'实验总结'
+          } 
+        ]
+      },
+    ];
+    return {
+      treeStep:{
+          steepName:'',//步骤调的名字,
+      },
+       dialogTest:false,//编辑器的步骤显示
+       markdownedit:{//编辑器
+           analysis:"",
+      },
+      treedata: JSON.parse(JSON.stringify(data)),
+      defaultProps: {
+        children: "children",
+        label: "label"
+      },
+
+      defaultProps: {
+        children: "children",
+        label: "label"
+      },
+
+      activeSteps: 1,
+      optionselect: [],
+      testformdeil: {
+        selectedOptions: []
+      },
+      dataStep:{},//存当前的
+      steptree:false,
+    };
+  },
+  methods: {
+    append(node,data) {
+      //添加节点
+      console.log('节点')
+      console.log(node)
+      console.log(data)
+      this.dialogTest=true
+       this.dataStep=data  
+       console.log(this.data)
+      // const newChild = { id: id++, label: "步骤", };
+      // if (!data.children) {
+      //     console.log(data.children)
+      //     this.$set(data, "children", []);
+      // }
+      // data.children.push(newChild);
+    },
+    closediglog(){
+         this.treeStep.steepName='' ;//关闭的时候清空
+    },
+    submitStepName(){//步骤的提交名字
+         const newChild={id: id++,label:this.treeStep.steepName}
+         console.log( this.dataStep)
+           this.$refs['treeStep'].validate((valid)=>{
+                if(valid){
+                       if(!this.dataStep.children){
+                            this.$set(this.dataStep, "children", []);       
+                       }  
+                     this.dialogTest=false 
+                   setTimeout(()=>{
+                        this.dataStep.children.push(newChild);    //添加孩子 
+                   },500)       
+                 }
+           })  
+    },
+    remove(node, data) {
+      //移除子节点
+      const parent = node.parent;
+      const children = parent.data.children || parent.data;
+      const index = children.findIndex(d => d.id === data.id);
+      children.splice(index, 1);
+    },
+    edittree(node, data){//编辑的时候
+          
+          console.log(data)
+           this.dialogTest=true
+          this.treeStep.steepName=data.label
+
+    },
+
+    selecttab(index) {
+      console.log(index.label);
+    },
+    changeval(val) {
+      //this.formvideo.courseContentId = this.formvideo.selectedOptions[2];
+    },
+    focusdata() {
+      var params = {
+        currentPage: 1,
+        pageSize: 100
+      };
+      courseStructurepage(params).then(res => {
+        if (res.data.code == 0) {
+          let lists = res.data.data.list;
+          lists.forEach((item, index) => {
+            this.optionselect.push({
+              label: item.courseStructureName,
+              value: item.courseStructureId,
+              children: []
+            });
+            this.Stairarryindex = this.optionselect;
+          });
+          this.Stairarryindex.forEach((item, indexcas) => {
+            var parms = {
+              currentPage: 1,
+              pageSize: 1000,
+              courseStructureId: this.optionselect[indexcas].value
+            };
+            courseClassificationpage(parms).then(res => {
+              let cascChid = [];
+              cascChid = res.data.data.list;
+              var _this = this;
+              if (res.data.code == 0) {
+                cascChid.forEach((item, index) => {
+                  this.optionselect[indexcas].children.push({
+                    label: item.courseClassificationName,
+                    value: item.courseClassificationId,
+                    children: []
+                  });
+                  var parms = {
+                    currentPage: 1,
+                    pageSize: 1000,
+                    courseClassificationId: this.optionselect[indexcas]
+                      .children[index].value
+                  };
+                  let conentchid = [];
+                  courseContentpage(parms).then(res => {
+                    conentchid = res.data.data.list;
+                    conentchid.forEach((item, contentindex) => {
+                      this.optionselect[indexcas].children[index].children.push(
+                        {
+                          label: item.courseContentName,
+                          value: item.courseContentId
+                        }
+                      );
+                    });
+                  });
+                });
+              }
+            });
+          });
+        }
+      });
+    },
+    basicnext() {
+      //点击下一步
+      this.activeSteps = this.activeSteps + 1;
+    }
+  },
+  mounted() {
+    this.focusdata();
+  }
+};
+</script>
+
+<style  lang='scss' scoped>
+.addtest {
+  .conctentedit {
+    height: 400px;
+    
+    margin-top: 20px;
+    border: 1px solid #ebebeb;
+  }
+  .mavom_editor{
+         margin: 0px 20px;
+         height:380px;
+         overflow-y: auto;
+          border:1px solid  #ebebeb;
+          border-top: 0px;
+  }
+  .concentborderleft{
+        height: 380px;
+        border-bottom:  1px solid #ebebeb;
+        border-right: 1px solid #ebebeb;
+    }
+}
+</style>
+<style>
+.testformdeil .el-form-item__content {
+  width: 600px;
+}
+.blockcaser .el-cascader {
+  width: 100%;
+}
+.custom-tree-node {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  padding-right: 8px;
+}
+</style>

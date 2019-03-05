@@ -1,0 +1,158 @@
+<template>
+  <el-row>
+    <el-col>
+      <div class="navigationbar">
+        <span class="navigationname">
+          在线考试管理
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+          试卷管理
+        </span>
+      </div>
+    </el-col>
+    <el-col :span='24' >
+          <el-form  size="mini"
+            :inline="true"
+            >
+               <el-form-item>
+                       <el-input placeholder="请输入内容"  v-model="paperName">
+                       <el-button slot="append" icon="el-icon-search"></el-button>
+                    </el-input> 
+               </el-form-item> 
+                <el-form-item>
+                      <el-button icon='el-icon-plus' type="primary" @click='testpaperadd' >试卷新增</el-button>
+                </el-form-item>
+          </el-form>
+    </el-col> 
+    <el-col :span='24'>
+               <el-table
+                    size="mini"
+                    border
+                    :data="tableData"
+                    style="width: 100%">
+                    <el-table-column>
+
+                    </el-table-column>
+                    <el-table-column
+                    prop="date"
+                    label="日期"
+                    width="180">
+                     <template slot-scope="scope">
+                         {{timeFormattershowsecod(scope.row.createTime)}}
+                     </template> 
+                    </el-table-column>
+                    <el-table-column
+                    prop="paperName"
+                    label="试卷名称"
+                    width="180">
+                    </el-table-column>
+                    <el-table-column
+                      prop="lengthTime"
+                      width='150'
+                      label="考试时长">
+                    </el-table-column>
+                    <el-table-column 
+                       width="50"
+                       prop="paperScore"
+                       label="分值"
+                       >
+                    </el-table-column>
+                    <el-table-column label="难度">
+                        <template  slot-scope="scope">
+                               <span v-if="scope.row.paperDifficulty==1">初级</span>
+                               <span v-if="scope.row.paperDifficulty==2">中级</span>
+                               <span  v-if='scope.row.paperDifficulty==3'>高中</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                      prop='paperDesc'
+                      label="试卷描述">
+                    </el-table-column>
+                    <el-table-column
+                      width='180'
+                      label="操作">
+                      <template slot-scope="scope" >
+                             <el-button  size='mini'  type="primary" @click="edit(scope.row)" >编辑</el-button>
+                             <el-button size="mini"  type="danger"    @click="delect(scope.row)"   >删除</el-button>
+                      </template>
+                    </el-table-column>
+               </el-table>  
+    </el-col>
+      <el-col :span="24">
+      <page-compent
+            :pagetotal="paggtatol"
+            :pageSize="pageSize"
+            @currentpage="pageIndexChange"
+           >
+      </page-compent>
+    </el-col>
+
+  </el-row>
+</template>
+
+<script>
+import pageCompent from "@/components/pagintion"
+import{timeFormattershowsecod}from '@/assets/js/common' 
+import{examinationpaperlist,examinationdelect}from'@/api/api'
+export default {
+          components: {
+            pageCompent
+        },
+       data(){
+            return{
+                  timeFormattershowsecod,
+                  paperName:'',
+                  tableData:[],
+                  currPage:1,
+                  pageSize:10,
+                  paggtatol:null,
+             }
+       },
+       methods:{
+             testpaperadd(){//点击新增页面,
+                      this.$router.push('/examtionpaperadd')
+             },
+            getpaperList(){
+                     var parms={
+                            currPage:this.currPage,
+                            pageSize:this.pageSize,
+                            paperName:this.paperName,
+                          }
+                   examinationpaperlist(parms).then(res=>{
+                                  console.log("试卷")
+                                  console.log(res)
+                                  if(res.data.code==0){
+                                      this.tableData=res.data.data.list  
+                                      this.paggtatol=res.data.data.total
+                                  }
+                     })            
+            },
+            pageIndexChange(index){
+                   this.currPage=index 
+                   this.getpaperList()
+               },
+             edit(index){//编辑
+                console.log(index)
+                
+                 
+               },
+             delect(index){//删除]
+                 console.log(index)
+                
+
+             }
+       },
+       mounted(){
+                this.getpaperList()
+       }
+
+
+};
+</script>
+
+<style  lang='scss'   scoped>
+
+</style>
+<style>
+
+
+</style>
